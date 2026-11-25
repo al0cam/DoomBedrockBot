@@ -9,8 +9,8 @@
   },
   "runtimes": [
     {
-      "name": "DoomAgent",
-      "build": "CodeZip",
+      "name": "DoomAgentV2",
+      "build": "Container",
       "entrypoint": "main.py",
       "codeLocation": "app/DoomAgent/",
       "runtimeVersion": "PYTHON_3_12",

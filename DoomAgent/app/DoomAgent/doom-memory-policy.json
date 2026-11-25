@@ -4,19 +4,15 @@
     {
       "Effect": "Allow",
       "Action": [
+        "bedrock-agentcore:StartBrowserSession",
+        "bedrock-agentcore:StopBrowserSession",
+        "bedrock-agentcore:GetBrowserSession",
+        "bedrock-agentcore:ConnectBrowserAutomationStream",
+        "bedrock-agentcore:ConnectBrowserLiveViewStream",
         "bedrock-agentcore:CreateEvent",
         "bedrock-agentcore:ListEvents"
       ],
       "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "bedrock-agentcore:StartBrowserSession",
-        "bedrock-agentcore:GetBrowserSession",
-        "bedrock-agentcore:StopBrowserSession"
-      ],
-      "Resource": "arn:aws:bedrock-agentcore:*:aws:browser/*"
     }
   ]
 }

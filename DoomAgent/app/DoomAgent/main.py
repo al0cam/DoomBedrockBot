@@ -1,8 +1,6 @@
 import asyncio
 import os
 import shutil
-import stat
-
 import threading
 
 from strands import Agent, tool
@@ -20,18 +18,11 @@ from explorer import Explorer
 from level_map import Level, fetch_wad
 from vision_map import VisionMap
 
-# Fix playwright node driver: CodeZip deploys to read-only /var/task.
-# Copy node binary to /tmp and point PLAYWRIGHT_NODEJS_PATH there.
-import playwright as _pw
-_src_node = os.path.join(os.path.dirname(_pw.__file__), "driver", "node")
-if os.path.isfile(_src_node) and not os.access(_src_node, os.X_OK):
-    _dst_node = "/tmp/pw-node"
-    if not os.path.isfile(_dst_node):
-        shutil.copy2(_src_node, _dst_node)
-        os.chmod(_dst_node, os.stat(_dst_node).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-    os.environ["PLAYWRIGHT_NODEJS_PATH"] = _dst_node
+# Point Playwright at system node instead of its bundled binary.
+_sys_node = shutil.which("node")
+if _sys_node:
+    os.environ["PLAYWRIGHT_NODEJS_PATH"] = _sys_node
 
-# Dedicated event loop for Playwright (needs proper subprocess support).
 _bg_loop = asyncio.new_event_loop()
 _bg_thread = threading.Thread(target=_bg_loop.run_forever, daemon=True)
 _bg_thread.start()
