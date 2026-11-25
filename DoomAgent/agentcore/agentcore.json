@@ -13,12 +13,27 @@
       "build": "CodeZip",
       "entrypoint": "main.py",
       "codeLocation": "app/DoomAgent/",
-      "runtimeVersion": "PYTHON_3_14",
+      "runtimeVersion": "PYTHON_3_12",
       "networkMode": "PUBLIC",
-      "protocol": "HTTP"
+      "protocol": "HTTP",
+      "envVars": [
+        {
+          "name": "DOOM_MEMORY_ID",
+          "value": "${DoomMapMemory.memoryId}"
+        }
+      ],
+      "additionalPolicies": [
+        "doom-memory-policy.json"
+      ]
     }
   ],
-  "memories": [],
+  "memories": [
+    {
+      "name": "DoomMapMemory",
+      "eventExpiryDuration": 90,
+      "strategies": []
+    }
+  ],
   "knowledgeBases": [],
   "credentials": [],
   "evaluators": [],
