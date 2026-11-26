@@ -18,21 +18,42 @@ The [full video](docs/media/run-level-complete.mp4) has the real speed.
 
 ```mermaid
 flowchart LR
-    M["Model<br/>Claude Sonnet 4.5 on Bedrock"] -- "tool call" --> T["Strands tools<br/>main.py"]
-    T -- "short text report" --> M
-    T --> C["Control code<br/>explorer.py, doom_control.py"]
+    U["Caller<br/>agentcore invoke"] -- "prompt" --> A
+    subgraph RT["AgentCore Runtime (container)"]
+        A["Strands agent loop<br/>main.py"]
+        T["Tools<br/>six Python functions"]
+        C["Control code<br/>explorer.py, doom_control.py"]
+        A -- "runs the tool" --> T
+        T -- "one line of text" --> A
+        T --> C
+    end
+    A -- "conversation and tool results" --> M["Amazon Bedrock<br/>Claude Sonnet 4.5"]
+    M -- "text or a tool request" --> A
     C -- "key presses over CDP" --> B["AgentCore Browser<br/>Doom in WebAssembly"]
     B -- "values from game memory" --> C
     C <--> S["AgentCore Memory<br/>saved map"]
 ```
 
+AgentCore Runtime hosts all the agent code in one container.
+The caller invokes the agent through AgentCore Runtime.
+In the container, the Strands agent loop calls the model through the Amazon Bedrock model API.
+AgentCore Runtime does not pass the model calls on.
+It gives the code a place to run and an IAM role.
+
+The model does not run a function.
+The model returns a tool request, which contains the name of the tool and its arguments.
+Then the Strands agent loop runs the Python function in the same container.
+The project does not use an AgentCore Gateway for the tools.
+
 One turn has these steps:
 
-1. The model calls a tool, for example `explore()`.
-2. The Python code reads the game memory and plans a path.
-3. The Python code holds keys in the browser until the tool budget ends.
-4. The tool returns one line of text to the model.
-5. The model selects the next tool.
+1. The Strands agent loop sends the conversation to the model on Bedrock.
+2. The model returns a tool request, for example `explore()`.
+3. The Strands agent loop runs the Python function for that tool.
+4. The Python code reads the game memory and plans a path.
+5. The Python code holds keys in the browser until the tool budget ends.
+6. The tool returns one line of text, and the loop sends it to the model.
+7. The model selects the next tool.
 
 ## The agent reads game memory, not images
 
@@ -181,9 +202,9 @@ If a save or a load fails, the run continues without the map.
 
 | Layer | Technology | Role |
 | --- | --- | --- |
-| Model | Claude Sonnet 4.5 on Amazon Bedrock | Selects the next tool |
+| Model | Claude Sonnet 4.5 on Amazon Bedrock | Selects the next tool. The agent loop calls it with the Bedrock model API. |
 | Agent framework | Strands Agents | Agent loop, `@tool` functions, streaming |
-| Runtime | AgentCore Runtime | Hosts `main.py` as a container, Python 3.12, HTTP |
+| Runtime | AgentCore Runtime | Hosts the agent loop, the tools and the control code in one container (Python 3.12, HTTP) |
 | Browser | AgentCore Browser | Managed Chromium session with live view in the AWS console |
 | Browser control | Playwright over CDP | Key presses and `page.evaluate` |
 | Game | Doom in WebAssembly at [silentspacemarine.com](https://silentspacemarine.com/) | Shareware `doom1.wad`, level E1M1 |
